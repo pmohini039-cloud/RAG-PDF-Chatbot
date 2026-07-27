@@ -1,6 +1,7 @@
 import os
 import streamlit as st
 
+from utils.streamer import stream_text
 from utils.pdf_loader import load_pdf, load_pdf_from_path
 from utils.pdf_downloader import download_pdf
 from utils.website_loader import load_website
@@ -15,12 +16,11 @@ st.set_page_config(
 )
 
 st.title("📚 AI Research Assistant")
-st.markdown(
-    """
-Upload PDF documents, a Website URL, or a PDF URL and ask questions
-about the content using Retrieval-Augmented Generation (RAG).
-"""
-)
+
+st.markdown("""
+Upload PDF documents, Website URLs or PDF URLs and ask questions
+about their content using Retrieval-Augmented Generation (RAG).
+""")
 
 if "processed" not in st.session_state:
     st.session_state.processed = False
@@ -85,6 +85,7 @@ with st.sidebar:
     if clear_button:
 
         st.session_state.messages = []
+
         st.rerun()
 
 if process_button:
@@ -96,10 +97,7 @@ if process_button:
             if source == "Upload PDF":
 
                 if not uploaded_files:
-
-                    st.warning(
-                        "Please upload at least one PDF."
-                    )
+                    st.warning("Please upload at least one PDF.")
                     st.stop()
 
                 documents = load_pdf(uploaded_files)
@@ -107,52 +105,32 @@ if process_button:
             elif source == "Website URL":
 
                 if website_url.strip() == "":
-
-                    st.warning(
-                        "Please enter a website URL."
-                    )
+                    st.warning("Please enter a Website URL.")
                     st.stop()
 
-                documents = load_website(
-                    website_url
-                )
+                documents = load_website(website_url)
 
             else:
 
                 if pdf_url.strip() == "":
-
-                    st.warning(
-                        "Please enter a PDF URL."
-                    )
+                    st.warning("Please enter a PDF URL.")
                     st.stop()
 
-                pdf_path = download_pdf(
-                    pdf_url
-                )
+                pdf_path = download_pdf(pdf_url)
 
-                documents = load_pdf_from_path(
-                    pdf_path
-                )
+                documents = load_pdf_from_path(pdf_path)
 
-            chunks = split_documents(
-                documents
-            )
+            chunks = split_documents(documents)
 
-            collection_name = create_vector_store(
-                chunks
-            )
+            collection_name = create_vector_store(chunks)
 
-            st.session_state.collection_name = (
-                collection_name
-            )
+            st.session_state.collection_name = collection_name
 
             st.session_state.processed = True
 
             st.session_state.messages = []
 
-            st.success(
-                "✅ Documents processed successfully!"
-            )
+            st.success("✅ Documents processed successfully!")
 
         except Exception as e:
 
@@ -178,9 +156,11 @@ if st.session_state.processed:
             ):
 
                 st.markdown("---")
+
                 st.markdown("### 📚 References")
 
                 for ref in message["references"]:
+
                     st.markdown(ref)
 
     question = st.chat_input(
@@ -205,10 +185,11 @@ if st.session_state.processed:
         with st.spinner("Thinking..."):
 
             answer = rag_chain.invoke(question)
-            
-        unique_sources = set()
-        references = []
 
+        unique_sources = set()
+
+        references = []
+        
         for doc in docs:
 
             source = doc.metadata.get(
@@ -257,7 +238,8 @@ if st.session_state.processed:
 
         with st.chat_message("assistant"):
 
-            st.markdown(answer)
+            # ChatGPT-style streaming
+            st.write_stream(stream_text(answer))
 
             if references:
 
@@ -267,20 +249,25 @@ if st.session_state.processed:
                 for ref in references:
 
                     st.markdown(ref)
-        
+
+# ----------------------------------------------------
+# Empty State
+# ----------------------------------------------------
+
 else:
 
     st.info(
         """
 ## 👋 Welcome to the AI Research Assistant
 
-This application allows you to chat with your documents using Retrieval-Augmented Generation (RAG).
+This application allows you to chat with your documents using
+Retrieval-Augmented Generation (RAG).
 
 ### Supported Sources
 
-- 📄 Upload one or more PDF files.
-- 🌐 Paste a Website URL.
-- 🔗 Paste a direct PDF URL.
+- 📄 Upload one or more PDF files
+- 🌐 Paste a Website URL
+- 🔗 Paste a direct PDF URL
 
 ### Example Questions
 
@@ -288,14 +275,14 @@ This application allows you to chat with your documents using Retrieval-Augmente
 - Summarize the document.
 - What are the key points?
 - Explain lambda functions.
-- Give me examples from the document.
 - Compare built-in and user-defined functions.
+- Give examples from the document.
 
 ### Workflow
 
-1. Choose a document source.
+1. Select a source.
 2. Click **Process Documents**.
-3. Ask your questions in the chat box.
+3. Ask questions in the chat.
 
 Happy Learning! 🚀
 """
