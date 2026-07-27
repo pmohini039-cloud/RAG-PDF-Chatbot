@@ -1,0 +1,22 @@
+# Virtual Environment
+venv/
+
+# Python
+__pycache__/
+*.pyc
+
+# Environment Variables
+.env
+
+# Chroma Database
+chroma_db/
+
+# Temporary Files
+temp/
+
+# Streamlit Secrets
+.streamlit/secrets.toml
+
+# OS Files
+.DS_Store
+Thumbs.db
