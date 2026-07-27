@@ -1,13 +1,10 @@
+# utils/streamer.py
 import time
 
-
-def stream_text(text):
+def stream_text(text: str, delay: float = 0.01):
     """
-    Streams text word by word like ChatGPT.
+    Yields text character-by-character for Streamlit's write_stream helper.
     """
-
-    words = text.split()
-
-    for word in words:
-        yield word + " "
-        time.sleep(0.03)
+    for char in text:
+        yield char
+        time.sleep(delay)
